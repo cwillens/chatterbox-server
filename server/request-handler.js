@@ -11,7 +11,8 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
-var stream = [];
+var fs = require('fs');
+//var stream = [];
 var id = 1;
 var messagesUrl = '/classes/messages';
 
@@ -23,20 +24,6 @@ var defaultCorsHeaders = {
 };
 
 var requestHandler = function(request, response) {
-  // Request and Response come from node's http module.
-  //
-  // They include information about both the incoming request, such as
-  // headers and URL, and about the outgoing response, such as its status
-  // and content.
-  //
-  // Documentation for both request and response can be found in the HTTP section at
-  // http://nodejs.org/documentation/api/
-
-  // Do some basic logging.
-  //
-  // Adding more logging to your server can be an easy way to get passive
-  // debugging help, but you should always be careful about leaving stray
-  // console.logs in your code.
 
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
   var statusCode = 404;
@@ -45,10 +32,6 @@ var requestHandler = function(request, response) {
   var url = request.url;
 
   var headers = defaultCorsHeaders;
-  // Tell the client we are sending them plain text.
-  //
-  // You will need to change this if you are sending something
-  // other than plain text, like JSON or HTML.
   headers['Content-Type'] = 'application/json';
 
   if (request.method === 'OPTIONS' && url.indexOf(messagesUrl) > -1) {
@@ -56,13 +39,11 @@ var requestHandler = function(request, response) {
       console.log(err);
     });
     request.on('data', function() {
-      console.log('what is happening????');
     });
     request.on('end', function() {
       request.on('error', function(err) {
         console.log(err);
       });
-      // console.log('body is ', body);
       statusCode = 200;
       response.writeHead(statusCode, headers);
       response.end('Hello, World!');
@@ -88,7 +69,13 @@ var requestHandler = function(request, response) {
       body['objectId'] = id;
       body['createdAt'] = new Date();
       id++;
-      stream.push(body);
+      //stream.push(body);
+      fs.appendFile('storage.txt', JSON.stringify(body) + '\n', (err) => {
+        if (err) {
+          console.log(err);
+        }
+      });
+
       // .writeHead() writes to the request line and headers of the response,
       // which includes the status and all headers.
       response.writeHead(statusCode, headers);
@@ -101,7 +88,6 @@ var requestHandler = function(request, response) {
       console.log(err);
     });
 
-    //we probably don't need this since we never call it...
     request.on('data', function(chunk) {
     });
 
@@ -114,6 +100,19 @@ var requestHandler = function(request, response) {
       headers['Content-Type'] = 'application/json';
 
       response.writeHead(statusCode, headers);
+      var stream = [];
+      
+      var textFileData = fs.readFileSync('storage.txt');
+      textFileData = textFileData.toString();
+      stream = textFileData.split('\n');
+
+      //slice off the empty string at the end of array
+      if (stream.length > 0) {
+        stream = stream.slice(0, stream.length - 1); 
+        if (stream.length > 0) { 
+          stream = stream.map(obj => (JSON.parse(obj))); 
+        } 
+      }
 
       if (url.indexOf('order') > -1) {
         var sortBy = url.slice(url.indexOf('order') + 6);
@@ -121,27 +120,20 @@ var requestHandler = function(request, response) {
         var streamCopy = stream.slice();
         if (sortBy[0] === '-') {
           sortByCopy = sortBy.slice(1);
-          console.log(sortByCopy, streamCopy);
           streamCopy.sort(function(a, b) {
-            // console.log('start');
-            // console.log(a.objectId - b.objectId);
             return b.objectId - a.objectId;
           });
         }
       }
-      
       streamCopy = streamCopy || stream;
 
       responseBody = {
         headers: headers,
         method: method,
         url: url,
-        results: streamCopy
+        results: streamCopy 
       };
-      // console.log('we send stuff back and it is', JSON.stringify(responseBody));
-      //console.log('the full big thing', response);
-      //response.writeHead(JSON.stringify(responseBody));
-      // var test = new Buffer(JSON.stringify(responseBody));
+
       response.end(JSON.stringify(responseBody));
     });
   } else {
