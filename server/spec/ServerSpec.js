@@ -19,8 +19,6 @@ describe('Node Server Request Listener Function', function() {
 
 
     handler.requestHandler(req, res);
-    console.log('RES IS ', res, "RESPONSE CODE IS ", res._responseCode);
-    console.log('request IS ', req);
 
     expect(res._responseCode).to.equal(200);
     expect(res._ended).to.equal(true);
