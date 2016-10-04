@@ -29,6 +29,7 @@ var requestHandler = function(request, response) {
   // Adding more logging to your server can be an easy way to get passive
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
+
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
   var statusCode = 404;
 
@@ -50,7 +51,7 @@ var requestHandler = function(request, response) {
       request.on('error', function(err) {
         console.log(err);
       });
-      console.log('body is ', body);
+      // console.log('body is ', body);
       statusCode = 200;
       response.writeHead(statusCode, headers);
       response.end('Hello, World!');
@@ -72,13 +73,20 @@ var requestHandler = function(request, response) {
       // which includes the status and all headers.
       response.writeHead(statusCode, headers);
 
-      console.log('live long, message well', stream);
+      // console.log('live long, message well', stream);
       response.end();
     });
   } else if (request.method === 'GET' && request.url === messagesUrl) { 
+    console.log(request.on('data', function() {return 5;}));
     request.on('error', function(err) {
       console.log(err);
-    }).on('end', function() {
+    });
+
+    request.on('data', function(chunk) {
+      body.push(chunk);
+    });
+
+    request.on('end', function() {
       request.on('error', function(err) {
         console.log(err);
       });
@@ -90,12 +98,12 @@ var requestHandler = function(request, response) {
         headers: headers,
         method: method,
         url: url,
-        results: stream,
+        results: stream
       };
-      console.log('we send stuff back and it is', JSON.stringify(responseBody));
+      // console.log('we send stuff back and it is', JSON.stringify(responseBody));
       //console.log('the full big thing', response);
-      response.write(JSON.stringify(responseBody));
-      response.end();
+      //response.writeHead(JSON.stringify(responseBody));
+      response.end(JSON.stringify(responseBody));
     });
   } else {
     response.writeHead(statusCode, headers);
