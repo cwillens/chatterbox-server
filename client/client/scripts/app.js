@@ -27,7 +27,6 @@ var app = {
 
     // Fetch previous messages
     app.startSpinner();
-    app.stopSpinner();
     app.fetch(false);
 
     // Poll for new messages
@@ -37,7 +36,7 @@ var app = {
   },
 
   send: function(message) {
-    app.startSpinner();
+    // app.startSpinner();
 
     // POST the message to the server
     $.ajax({
@@ -61,7 +60,7 @@ var app = {
     $.ajax({
       url: app.server,
       type: 'GET',
-      // data: { order: '-createdAt' },
+      data: { order: '-createdAt' },
       contentType: 'application/json',
       success: function(data) {
         console.log('its me data!', data);
@@ -79,7 +78,8 @@ var app = {
         app.messages = data.results;
 
         // Get the last message
-        var mostRecentMessage = data.results[data.results.length - 1];
+        var mostRecentMessage = data.results[0];
+        console.log('recent', mostRecentMessage, 'most recent is ', mostRecentMessage.objectId, 'current is ', app.lastMessageId);
 
         // Only bother updating the DOM if we have a new message
         if (mostRecentMessage.objectId !== app.lastMessageId) {

@@ -51,7 +51,7 @@ var requestHandler = function(request, response) {
   // other than plain text, like JSON or HTML.
   headers['Content-Type'] = 'application/json';
 
-  if (request.method === 'OPTIONS' && request.url === messagesUrl) {
+  if (request.method === 'OPTIONS' && url.indexOf(messagesUrl) > -1) {
     request.on('error', function(err) {
       console.log(err);
     });
@@ -67,7 +67,7 @@ var requestHandler = function(request, response) {
       response.writeHead(statusCode, headers);
       response.end('Hello, World!');
     });
-  } else if (request.method === 'POST' && request.url === messagesUrl) {
+  } else if (request.method === 'POST' && url.indexOf(messagesUrl) > -1) {
     
     request.on('error', function(err) {
       console.log(err);
@@ -80,7 +80,6 @@ var requestHandler = function(request, response) {
     request.on('end', function() {
       
       // body = Buffer.concat(body).toString();
-      console.log('THIS IS OUR BODY ', body);
       request.on('error', function(err) {
         console.log(err);
       });
@@ -88,7 +87,6 @@ var requestHandler = function(request, response) {
       body = JSON.parse(body);
       body['objectId'] = id;
       body['createdAt'] = new Date();
-      console.log('now our body is', body);
       id++;
       stream.push(body);
       // .writeHead() writes to the request line and headers of the response,
@@ -96,15 +94,15 @@ var requestHandler = function(request, response) {
       response.writeHead(statusCode, headers);
 
       // console.log('live long, message well', stream);
-      response.end();
+      response.end(JSON.stringify(id));
     });
-  } else if (request.method === 'GET' && request.url === messagesUrl) { 
+  } else if (request.method === 'GET' && url.indexOf(messagesUrl) > -1) { 
     request.on('error', function(err) {
       console.log(err);
     });
 
+    //we probably don't need this since we never call it...
     request.on('data', function(chunk) {
-      body.push(chunk);
     });
 
     request.on('end', function() {
@@ -117,11 +115,28 @@ var requestHandler = function(request, response) {
 
       response.writeHead(statusCode, headers);
 
+      if (url.indexOf('order') > -1) {
+        var sortBy = url.slice(url.indexOf('order') + 6);
+        // console.log(sortBy);
+        var streamCopy = stream.slice();
+        if (sortBy[0] === '-') {
+          sortByCopy = sortBy.slice(1);
+          console.log(sortByCopy, streamCopy);
+          streamCopy.sort(function(a, b) {
+            // console.log('start');
+            // console.log(a.objectId - b.objectId);
+            return b.objectId - a.objectId;
+          });
+        }
+      }
+      
+      streamCopy = streamCopy || stream;
+
       responseBody = {
         headers: headers,
         method: method,
         url: url,
-        results: stream
+        results: streamCopy
       };
       // console.log('we send stuff back and it is', JSON.stringify(responseBody));
       //console.log('the full big thing', response);
