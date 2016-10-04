@@ -12,6 +12,7 @@ this file and include it in basic-server.js so that it actually works.
 
 **************************************************************/
 var stream = [];
+var id = 1;
 var messagesUrl = '/classes/messages';
 
 var defaultCorsHeaders = {
@@ -39,7 +40,6 @@ var requestHandler = function(request, response) {
 
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
   var statusCode = 404;
-
   var body = [];
   var method = request.method;
   var url = request.url;
@@ -49,12 +49,16 @@ var requestHandler = function(request, response) {
   //
   // You will need to change this if you are sending something
   // other than plain text, like JSON or HTML.
-  headers['Content-Type'] = 'text/plain';
+  headers['Content-Type'] = 'application/json';
 
   if (request.method === 'OPTIONS' && request.url === messagesUrl) {
     request.on('error', function(err) {
       console.log(err);
-    }).on('end', function() {
+    });
+    request.on('data', function() {
+      console.log('what is happening????');
+    });
+    request.on('end', function() {
       request.on('error', function(err) {
         console.log(err);
       });
@@ -64,21 +68,29 @@ var requestHandler = function(request, response) {
       response.end('Hello, World!');
     });
   } else if (request.method === 'POST' && request.url === messagesUrl) {
+    
     request.on('error', function(err) {
       console.log(err);
     });
+
     request.on('data', function(chunk) {
       body.push(chunk);
     });
+
     request.on('end', function() {
-      console.log("THIS IS OUR BODY ", body);
-     // body = Buffer.concat(body).toString();
+      
+      // body = Buffer.concat(body).toString();
+      console.log('THIS IS OUR BODY ', body);
       request.on('error', function(err) {
         console.log(err);
       });
       statusCode = 201;
-
-      stream.push(JSON.parse(body));
+      body = JSON.parse(body);
+      body['objectId'] = id;
+      body['createdAt'] = new Date();
+      console.log('now our body is', body);
+      id++;
+      stream.push(body);
       // .writeHead() writes to the request line and headers of the response,
       // which includes the status and all headers.
       response.writeHead(statusCode, headers);
@@ -101,6 +113,8 @@ var requestHandler = function(request, response) {
       });
       statusCode = 200;
 
+      headers['Content-Type'] = 'application/json';
+
       response.writeHead(statusCode, headers);
 
       responseBody = {
@@ -112,6 +126,7 @@ var requestHandler = function(request, response) {
       // console.log('we send stuff back and it is', JSON.stringify(responseBody));
       //console.log('the full big thing', response);
       //response.writeHead(JSON.stringify(responseBody));
+      // var test = new Buffer(JSON.stringify(responseBody));
       response.end(JSON.stringify(responseBody));
     });
   } else {

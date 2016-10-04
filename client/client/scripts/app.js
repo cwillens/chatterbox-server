@@ -3,7 +3,7 @@ var app = {
 
   //TODO: The current 'handleUsernameClick' function just toggles the class 'friend'
   //to all messages sent by the user
-  server: 'http://127.0.0.1:8080',
+  server: 'http://127.0.0.1:8080/classes/messages',
   username: 'anonymous',
   roomname: 'lobby',
   lastMessageId: 0,
@@ -61,9 +61,17 @@ var app = {
     $.ajax({
       url: app.server,
       type: 'GET',
-      data: { order: '-createdAt' },
+      // data: { order: '-createdAt' },
       contentType: 'application/json',
       success: function(data) {
+        console.log('its me data!', data);
+        console.log('i, data.results, am', data['results']);
+
+
+        // for (var key in data) {
+        //   console.log(data[key]);
+        // }
+
         // Don't bother if we have nothing to work with
         if (!data.results || !data.results.length) { return; }
 
@@ -235,3 +243,10 @@ var app = {
     $('form input[type=submit]').attr('disabled', null);
   }
 };
+
+// {"headers":
+// {"access-control-allow-origin":"*","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","access-control-allow-headers":"content-type, accept","access-control-max-age":10,"Content-Type":"text/plain"}
+// ,"method":"GET","url":"/classes/messages",
+// "results":[{"username":"pee","text":"uuuuu eat my own toes","roomname":"lobby","objectId":1,"createdAt":"2016-10-04T03:14:26.487Z"},
+// {"username":"pee","text":"uuuuu eat my own toes","roomname":"lobby","objectId":2,"createdAt":"2016-10-04T03:14:29.495Z"}]
+// }
